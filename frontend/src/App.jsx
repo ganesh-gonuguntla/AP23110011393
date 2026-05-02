@@ -10,28 +10,34 @@ import { Log } from './utils/logger';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#2563eb', // Modern blue
-    },
+      main: '#2563eb',    },
     secondary: {
-      main: '#7c3aed', // Purple for result
-    },
+      main: '#7c3aed',    },
     success: {
-      main: '#10b981', // Green for events
-    },
-    background: {
-      default: '#f8fafc',
-    },
+      main: '#10b981',    },
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 700,
-    }
+    fontFamily: '"Outfit", "Helvetica", "Arial", sans-serif',
+    h1: { fontFamily: '"Playfair Display", serif' },
+    h2: { fontFamily: '"Playfair Display", serif' },
+    h3: { fontFamily: '"Playfair Display", serif' },
+    h4: { fontFamily: '"Playfair Display", serif', fontWeight: 700 },
+    h5: { fontFamily: '"Playfair Display", serif' },
+    h6: { fontFamily: '"Playfair Display", serif' },
   },
   shape: {
     borderRadius: 12,
   },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          background: 'linear-gradient(135deg, #36CFE7 0%, #46D89B 100%)',
+          backgroundAttachment: 'fixed',
+          minHeight: '100vh',
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {

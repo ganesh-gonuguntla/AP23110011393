@@ -1,18 +1,18 @@
 import { parseISO } from 'date-fns';
 
-// Weights: placement > result > event
 const TYPE_WEIGHTS = {
-  'Placement': 3,
-  'Result': 2,
-  'Event': 1,
+  'placement': 3,
+  'result': 2,
+  'results': 2,
+  'event': 1,
 };
 
-// If timestamp is like "2026-04-22 17:51:30" (missing T), date-fns might complain.
-// We can just replace space with T or rely on Date parsing.
 const parseDate = (dateStr) => {
   try {
+    if (!dateStr) return 0;
     const isoString = dateStr.replace(' ', 'T');
-    return new Date(isoString).getTime();
+    const time = new Date(isoString).getTime();
+    return isNaN(time) ? 0 : time;
   } catch(e) {
     return 0;
   }
@@ -22,23 +22,23 @@ export const getPriorityNotifications = (notifications, limit = 10, typeFilter =
   let filtered = notifications;
   
   if (typeFilter) {
-    filtered = filtered.filter(n => n.Type === typeFilter);
+    filtered = filtered.filter(n => 
+      n.Type?.trim().toLowerCase() === typeFilter.trim().toLowerCase()
+    );
   }
   
-  // Sort by weight first, then by timestamp (recency)
   const sorted = [...filtered].sort((a, b) => {
-    const weightA = TYPE_WEIGHTS[a.Type] || 0;
-    const weightB = TYPE_WEIGHTS[b.Type] || 0;
+    const typeA = a.Type?.trim().toLowerCase() || '';
+    const typeB = b.Type?.trim().toLowerCase() || '';
+    const weightA = TYPE_WEIGHTS[typeA] || (typeA ? 0 : -1);
+    const weightB = TYPE_WEIGHTS[typeB] || (typeB ? 0 : -1);
     
     if (weightA !== weightB) {
-      return weightB - weightA; // Higher weight first
-    }
+      return weightB - weightA;    }
     
-    // Tie-breaker: recency
     const timeA = parseDate(a.Timestamp);
     const timeB = parseDate(b.Timestamp);
-    return timeB - timeA; // Newer first
-  });
+    return timeB - timeA;  });
 
   return sorted.slice(0, limit);
 };

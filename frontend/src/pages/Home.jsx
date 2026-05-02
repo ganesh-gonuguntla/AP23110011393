@@ -5,7 +5,7 @@ import { NotificationCard } from '../components/NotificationCard';
 import { Log } from '../utils/logger';
 
 export const Home = () => {
-  const [notifications, setNotifications] = useState([]);
+  const [allNotifications, setAllNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [type, setType] = useState('');
   const [page, setPage] = useState(1);
@@ -15,39 +15,53 @@ export const Home = () => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const params = { limit, page };
-        if (type) params.notification_type = type;
-        
-        const data = await fetchNotifications(params);
-        setNotifications(data.notifications || []);
-        Log('frontend', 'info', 'page', `Fetched ${data.notifications?.length || 0} notifications for Home`);
+        const data = await fetchNotifications();
+        setAllNotifications(data.notifications || []);
+        Log('frontend', 'info', 'page', `Loaded ${data.notifications?.length || 0} notifications for Home`);
       } catch (error) {
-        Log('frontend', 'error', 'page', `Failed to fetch notifications: ${error.message}`);
+        Log('frontend', 'error', 'page', `Failed to load notifications: ${error.message}`);
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, [type, page]);
+  }, []);
+
+  const filteredNotifications = React.useMemo(() => {
+    let result = allNotifications;
+    if (type) {
+      result = result.filter(n => 
+        n.Type?.trim().toLowerCase() === type.trim().toLowerCase()
+      );
+    }
+    return result;
+  }, [allNotifications, type]);
+
+  const displayedNotifications = React.useMemo(() => {
+    const start = (page - 1) * limit;
+    return filteredNotifications.slice(start, start + limit);
+  }, [filteredNotifications, page]);
+
+  const pageCount = Math.ceil(filteredNotifications.length / limit) || 1;
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1" fontWeight="bold">
+    <Container maxWidth={false} sx={{ maxWidth: 1350, py: 4 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" component="h1" fontWeight="bold" color="white" sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>
           All Notifications
         </Typography>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Type</InputLabel>
+        <FormControl size="small" sx={{ minWidth: 150, bgcolor: 'rgba(255,255,255,0.9)', borderRadius: 2 }}>
+          <InputLabel>Filter by Type</InputLabel>
           <Select
             value={type}
-            label="Type"
+            label="Filter by Type"
             onChange={(e) => {
               setType(e.target.value);
               setPage(1);
-              Log('frontend', 'info', 'page', `Changed filter to ${e.target.value || 'All'}`);
+              Log('frontend', 'info', 'page', `Filter changed to ${e.target.value || 'All'}`);
             }}
           >
-            <MenuItem value=""><em>All</em></MenuItem>
+            <MenuItem value=""><em>All Categories</em></MenuItem>
             <MenuItem value="Placement">Placement</MenuItem>
             <MenuItem value="Result">Result</MenuItem>
             <MenuItem value="Event">Event</MenuItem>
@@ -56,26 +70,36 @@ export const Home = () => {
       </Box>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" py={4}>
-          <CircularProgress />
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+          <CircularProgress sx={{ color: 'white' }} />
         </Box>
       ) : (
         <>
-          {notifications.map((n) => (
-            <NotificationCard key={n.ID} notification={n} />
-          ))}
-          {notifications.length === 0 && (
-            <Typography align="center" color="text.secondary">No notifications found.</Typography>
-          )}
-          <Box display="flex" justifyContent="center" mt={4}>
+          <Box sx={{ minHeight: '60vh' }}>
+            {displayedNotifications.map((n) => (
+              <NotificationCard key={n.ID} notification={n} />
+            ))}
+            {displayedNotifications.length === 0 && (
+              <Box sx={{ py: 10, textAlign: 'center' }}>
+                <Typography variant="h6" color="white" sx={{ opacity: 0.8 }}>
+                  No notifications found for this category.
+                </Typography>
+              </Box>
+            )}
+          </Box>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <Pagination 
-              count={10} 
+              count={pageCount} 
               page={page} 
               onChange={(e, value) => {
                 setPage(value);
-                Log('frontend', 'info', 'page', `Navigated to page ${value}`);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }} 
-              color="primary" 
+              sx={{ 
+                '& .MuiPaginationItem-root': { color: 'white' },
+                '& .Mui-selected': { bgcolor: 'rgba(255,255,255,0.3) !important' }
+              }}
             />
           </Box>
         </>
