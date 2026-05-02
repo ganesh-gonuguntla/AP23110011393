@@ -15,7 +15,7 @@ export const PriorityInbox = () => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const data = await fetchNotifications({ limit: 100 }); 
+        const data = await fetchNotifications(); 
         const allNotifs = data.notifications || [];
         
         const priorityNotifs = getPriorityNotifications(allNotifs, limit, type);
